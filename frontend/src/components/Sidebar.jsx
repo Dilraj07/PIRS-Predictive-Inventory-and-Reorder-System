@@ -7,7 +7,7 @@ export function Sidebar({ activeTab, onTabChange }) {
     { id: 'inventory', icon: Package, label: 'Inventory' },
     { id: 'shipments', icon: Truck, label: 'Orders' }, // Mapped to Orders
     { id: 'reports', icon: BarChart3, label: 'Reporting' },
-    { id: 'reports', icon: BarChart3, label: 'Reporting' },
+
   ];
 
   return (

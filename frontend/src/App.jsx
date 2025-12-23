@@ -132,22 +132,24 @@ function App() {
             {/* Dashboard Hero */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               {/* Priority Alert (Min-Heap Visualization) */}
-              <div className="md:col-span-2 relative overflow-hidden bg-white p-6 rounded-xl shadow-sm border border-slate-200 flex items-center justify-between group">
-                <div className={`absolute top-0 bottom-0 left-0 w-1 ${priority?.days_remaining < 7 ? 'bg-rose-500' : 'bg-emerald-500'}`} />
+              {/* Priority Alert (Min-Heap Visualization) */}
+              <div className={`md:col-span-2 relative overflow-hidden p-6 rounded-[2rem] shadow-sm border transition-all ${priority?.days_remaining < 7 ? 'bg-rose-50/80 border-rose-100 shadow-[0_0_20px_rgba(244,63,94,0.15)] backdrop-blur-md' : 'bg-white border-slate-200'
+                } flex items-center justify-between group`}>
+
                 <div>
                   <div className="flex items-center gap-2 mb-3">
-                    <span className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-bold uppercase tracking-wider ${priority?.days_remaining < 7 ? 'bg-rose-50 text-rose-600 border border-rose-100' : 'bg-emerald-50 text-emerald-600 border border-emerald-100'
+                    <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-bold uppercase tracking-wider shadow-sm ${priority?.days_remaining < 7 ? 'bg-white text-rose-600 border border-rose-100' : 'bg-emerald-50 text-emerald-600 border border-emerald-100'
                       }`}>
                       {priority?.days_remaining < 7 ? <AlertCircle size={12} /> : <CheckCircle2 size={12} />}
                       {priority?.days_remaining < 7 ? 'Priority #1 (Min-Heap Root)' : 'System Healthy'}
                     </span>
                   </div>
-                  <h2 className="text-2xl font-bold text-slate-900 mb-1">{priority?.name || "Unknown Product"}</h2>
+                  <h2 className="text-3xl font-bold text-slate-900 mb-1">{priority?.name || "Unknown Product"}</h2>
                   <p className="text-slate-500 text-sm">Forecasted Stockout: <strong className={priority?.days_remaining < 7 ? "text-rose-600" : "text-slate-700"}>{Math.round(priority?.days_remaining)} Days Remaining</strong></p>
                 </div>
-                <div className="text-right bg-slate-50 px-5 py-3 rounded-lg border border-slate-100">
+                <div className={`text-right px-6 py-4 rounded-2xl border ${priority?.days_remaining < 7 ? 'bg-white/80 border-rose-100' : 'bg-slate-50 border-slate-100'}`}>
                   <span className="block text-xs text-slate-400 uppercase tracking-wider font-semibold mb-1">Stock</span>
-                  <span className="text-3xl font-bold text-slate-900 tracking-tight">{priority?.current_stock}</span>
+                  <span className="text-4xl font-bold text-slate-900 tracking-tight">{priority?.current_stock}</span>
                 </div>
               </div>
 
