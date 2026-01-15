@@ -10,28 +10,28 @@ export function ArchitectureView() {
       title: "Max-Heap Priority Queue",
       role: "Logistical Triage",
       desc: "Used in the 'Triage Board' to ensure the most critical orders (Expiring, VIP) are processed first. New orders are inserted in O(log n) time.",
-      image: "/assets/ds_priority_queue_heap_1768486575360.png",
+      image: "/assets/min_heap_priority_queue.png",
       complexity: "O(log n)"
     },
     {
       title: "Binary Search Tree (BST)",
       role: "Inventory Intelligence",
       desc: "Used in the 'Inventory' tab to organize products by stability days. Allows for efficient range queries to find all 'Critical' items instantly.",
-      image: "/assets/ds_bst_inventory_1768486595168.png",
+      image: "/assets/bst_inventory_stability.png",
       complexity: "O(log n) Search"
     },
     {
       title: "Circular Linked List",
       role: "Audit Fairness",
       desc: "Used for the 'Audit Schedule' to guarantee a continuous, round-robin check of all inventory slots, ensuring nothing is ever missed.",
-      image: "/assets/ds_circular_linked_list_1768486616600.png",
+      image: "/assets/circular_linked_list_audit.png",
       complexity: "O(1) Next Step"
     },
     {
       title: "Hash Map / Dictionary",
       role: "Instant Access",
       desc: "The backbone of the entire system. Allows O(1) constant-time lookup of any product's details using its unique SKU.",
-      image: "/assets/ds_hash_map_lookup_1768486644574.png",
+      image: "/assets/hash_table_lookup.png",
       complexity: "O(1) Access"
     }
   ];
