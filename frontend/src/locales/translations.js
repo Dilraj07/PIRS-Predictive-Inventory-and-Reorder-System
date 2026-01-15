@@ -81,6 +81,7 @@ export const translations = {
         stable: "Stable",
         overstocked: "Overstocked",
         appName: "Saaman",
+        downloadReport: "Download Report",
     },
 
     hi: {
@@ -165,6 +166,7 @@ export const translations = {
         stable: "स्थिर",
         overstocked: "अधिक स्टॉक",
         appName: "सामान",
+        downloadReport: "रिपोर्ट डाउनलोड करें",
     },
 
     kn: {
@@ -246,8 +248,9 @@ export const translations = {
         // Common
         loading: "PIRS ಡ್ಯಾಶ್‌ಬೋರ್ಡ್ ಲೋಡ್ ಆಗುತ್ತಿದೆ...",
         critical: "ನಿರ್ಣಾಯಕ",
-        stable: "ಸ್ಥಿರ",
+        stable: "ಸ್ಥिर",
         overstocked: "ಹೆಚ್ಚು ಸ್ಟಾಕ್",
         appName: "ಸಾಮಾನು",
+        downloadReport: "ವರದಿಯನ್ನು ಡೌನ್‌ಲೋಡ್ ಮಾಡಿ",
     }
 };

@@ -5,7 +5,7 @@ import { LanguageSelector } from './LanguageSelector';
 import { useLanguage } from '../contexts/LanguageContext';
 
 export function Sidebar({ activeTab, onTabChange }) {
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
 
   const menuItems = [
     { id: 'dashboard', icon: LayoutDashboard, label: t('dashboard') },
@@ -72,7 +72,7 @@ export function Sidebar({ activeTab, onTabChange }) {
           onClick={async () => {
             try {
               // Trigger download
-              const response = await axios.get('http://127.0.0.1:8000/api/reports/download', {
+              const response = await axios.get(`http://127.0.0.1:8000/api/reports/download?lang=${language}`, {
                 responseType: 'blob',
               });
               const url = window.URL.createObjectURL(new Blob([response.data], { type: 'application/pdf' }));
