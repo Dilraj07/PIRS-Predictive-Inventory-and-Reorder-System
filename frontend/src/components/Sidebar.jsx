@@ -1,4 +1,3 @@
-import React from 'react';
 import { LayoutDashboard, Package, ShoppingCart, BarChart3, Settings, HelpCircle, Truck, ClipboardList, FileText } from 'lucide-react';
 import axios from 'axios';
 import { LanguageSelector } from './LanguageSelector';

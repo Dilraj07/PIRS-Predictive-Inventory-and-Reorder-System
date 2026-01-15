@@ -8,8 +8,14 @@ import { OrdersTable } from './components/OrdersTable';
 import { Modal } from './components/Modal';
 import { AddProductForm } from './components/AddProductForm';
 import { ArchitectureView } from './components/ArchitectureView';
+import GetStarted from './pages/GetStarted';
 import { AlertCircle, CheckCircle2, TrendingUp, Package, RefreshCw, ShoppingCart, Plus, Search, Info } from 'lucide-react';
 import { useLanguage } from './contexts/LanguageContext';
+
+import { AnimatePresence, motion } from 'framer-motion';
+
+// ... (imports remain)
+
 
 // Configure Axios
 const api = axios.create({
@@ -18,6 +24,7 @@ const api = axios.create({
 
 function App() {
   const { t } = useLanguage();
+  const [showIntro, setShowIntro] = useState(true);
   const [activeTab, setActiveTab] = useState('dashboard');
   const [summary, setSummary] = useState(null);
   const [priority, setPriority] = useState(null);
@@ -34,24 +41,26 @@ function App() {
         api.get('/priority/top'),
         api.get('/inventory/stability'),
         api.get('/audit/next'),
-        api.get('/orders/history')
+        api.get('/orders/history') // Assuming this endpoint exists now or use empty
       ]);
 
       setSummary(sumRes.data);
       setPriority(priRes.data);
       setInventory(invRes.data);
       setAudit(audRes.data.audit_sequence);
-      setOrders(ordRes.data);
+      setOrders(ordRes.data); // Mocked or real
       setLoading(false);
     } catch (error) {
       console.error("Failed to fetch data", error);
+      // Even if data fails, we might want to stop loading to show UI
       setLoading(false);
     }
   };
 
   useEffect(() => {
+    // Start fetching data immediately
     fetchData();
-    const interval = setInterval(fetchData, 5000); // Poll every 5s
+    const interval = setInterval(fetchData, 5000);
     return () => clearInterval(interval);
   }, []);
 
@@ -60,9 +69,11 @@ function App() {
     fetchData();
   };
 
-
-
-  if (loading) return <div className="h-screen flex items-center justify-center bg-slate-50 text-slate-400 font-medium">{t('loading')}</div>;
+  // Custom Loading Screen only for invalid initial state, 
+  // but since we have Intro, we can load data BEHIND the intro.
+  // We won't block render with "Loading..." text anymore if Intro is up.
+  // But for safety:
+  if (loading && !showIntro) return <div className="h-screen flex items-center justify-center bg-slate-50 text-slate-400 font-medium">{t('loading')}</div>;
 
   const renderContent = () => {
     switch (activeTab) {
@@ -206,22 +217,37 @@ function App() {
   };
 
   return (
-    <div className="flex bg-[#F1F5F9] min-h-screen font-sans">
-      <Sidebar activeTab={activeTab} onTabChange={setActiveTab} />
+    <div className="relative w-full h-screen overflow-hidden font-sans bg-[#F1F5F9]">
+      <AnimatePresence>
+        {showIntro && (
+          <motion.div
+            key="intro"
+            initial={{ y: 0 }}
+            exit={{ y: '-100vh', transition: { duration: 0.8, ease: "easeInOut" } }}
+            className="fixed inset-0 z-[100] bg-white"
+          >
+            <GetStarted onStart={() => setShowIntro(false)} />
+          </motion.div>
+        )}
+      </AnimatePresence>
 
-      <main className="ml-72 flex-1 p-8 overflow-y-auto">
-        <header className="flex justify-between items-center mb-8">
-          {/* Dynamic Header based on active tab could go here, but kept simple for now */}
-        </header>
+      <div className="flex bg-[#F1F5F9] min-h-screen">
+        <Sidebar activeTab={activeTab} onTabChange={setActiveTab} />
 
-        {renderContent()}
+        <main className="ml-72 flex-1 p-8 overflow-y-auto h-screen">
+          <header className="flex justify-between items-center mb-8">
+            {/* Dynamic Header based on active tab could go here, but kept simple for now */}
+          </header>
 
-        {/* Modal */}
-        <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} title={t('addNewProduct')}>
-          <AddProductForm onSuccess={handleProductAdded} onCancel={() => setIsModalOpen(false)} />
-        </Modal>
+          {renderContent()}
 
-      </main>
+          {/* Modal */}
+          <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} title={t('addNewProduct')}>
+            <AddProductForm onSuccess={handleProductAdded} onCancel={() => setIsModalOpen(false)} />
+          </Modal>
+
+        </main>
+      </div>
     </div>
   );
 }
