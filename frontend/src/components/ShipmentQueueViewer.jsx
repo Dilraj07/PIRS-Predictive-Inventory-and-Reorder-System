@@ -1,117 +1,195 @@
-import React, { useEffect, useState } from 'react';
-import { Truck, Package, Clock, ArrowRight, MapPin } from 'lucide-react';
-import { Card } from './Card';
+import React, { useState, useEffect } from 'react';
+import { Package, Truck, AlertTriangle, CheckCircle, Clock, Zap, MapPin, XCircle, AlertCircle } from 'lucide-react';
 import axios from 'axios';
-import { TrolleyAnimation } from './TrolleyAnimation';
-import { useLanguage } from '../contexts/LanguageContext';
 
 export function ShipmentQueueViewer() {
-  const { t } = useLanguage();
-  const [queue, setQueue] = useState([]);
+  const [data, setData] = useState({ priority_queue: [], pick_list: [], blocked_orders: [] });
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
-  const fetchQueue = async () => {
+  const fetchData = async () => {
     try {
-      const res = await axios.get('http://127.0.0.1:8000/api/shipping/queue');
-      setQueue(res.data);
+      const response = await axios.get('http://127.0.0.1:8000/api/shipping/dashboard');
+      setData(response.data);
+      setError(null); // Clear error on success
       setLoading(false);
-    } catch (e) {
-      console.error(e);
+    } catch (err) {
+      console.error("Failed to fetch shipping data", err);
+      setError("Failed to connect to backend server. Please ensure the API is running (uvicorn api:app).");
+      setLoading(false);
     }
   };
 
   useEffect(() => {
-    fetchQueue();
-    const interval = setInterval(fetchQueue, 3000);
+    fetchData();
+    const interval = setInterval(fetchData, 5000); // Poll every 5 seconds
     return () => clearInterval(interval);
   }, []);
 
+  if (loading) return <div className="p-8 text-center text-slate-400">Loading Triage Board...</div>;
+
+  if (error) return (
+    <div className="flex flex-col items-center justify-center h-screen p-8 text-center text-rose-500 bg-rose-50/50">
+      <AlertCircle size={48} className="mb-4 text-rose-400" />
+      <h3 className="text-xl font-bold text-rose-700">Connection Error</h3>
+      <p className="max-w-md mt-2 text-rose-600">{error}</p>
+      <button
+        onClick={() => { setLoading(true); fetchData(); }}
+        className="mt-6 px-6 py-2 bg-rose-100 text-rose-700 rounded-lg hover:bg-rose-200 font-bold transition-colors"
+      >
+        Retry Connection
+      </button>
+    </div>
+  );
+
+  // Filter Categories
+  const expressLane = data.priority_queue.filter(order => order.days_remaining < 7 && order.stock_available);
+  const shortageAlert = data.priority_queue.filter(order => !order.stock_available);
+  const standardQueue = data.priority_queue.filter(order => order.days_remaining >= 7 && order.stock_available);
+
+  // Action Handlers
+  const handleDispatch = async (orderId) => {
+    try {
+      await axios.post(`http://127.0.0.1:8000/api/orders/${orderId}/dispatch`);
+      // Refresh data immediately
+      fetchData();
+    } catch (err) {
+      alert("Failed to dispatch: " + (err.response?.data?.detail || err.message));
+    }
+  };
+
   return (
-    <div className="space-y-6">
-      <div className="flex justify-between items-end border-b border-slate-200/60 pb-4">
+    <div className="p-6 space-y-6 h-screen flex flex-col">
+      {/* Header */}
+      <div className="flex justify-between items-center shrink-0">
         <div>
-          <h2 className="text-xl font-bold text-slate-900 tracking-tight">{t('outboundLogistics')}</h2>
-          <p className="text-slate-500 text-sm mt-1">{t('fifoQueueProcessing')}</p>
+          <h2 className="text-2xl font-bold text-slate-800 flex items-center gap-2">
+            <Truck className="text-sky-500" /> Shipment Triage Board
+          </h2>
+          <p className="text-slate-500 text-sm">Scenario-Based Workflow: Express vs Shortage vs Standard</p>
         </div>
-        <div className="flex items-center gap-2 bg-sky-50 px-3 py-1.5 rounded-lg border border-sky-100">
-          <div className="w-2 h-2 rounded-full bg-sky-500 animate-pulse"></div>
-          <span className="text-xs font-bold text-sky-700 uppercase tracking-wider">{t('liveStream')}</span>
+        <div className="flex gap-4">
+          {/* Add aggregated stats here if needed */}
         </div>
       </div>
 
-      {queue.length === 0 ? (
-        <div className="text-center py-16 bg-slate-50/50 rounded-2xl border-2 border-dashed border-slate-200">
-          <div className="w-16 h-16 bg-white rounded-full flex items-center justify-center mx-auto mb-4 text-slate-300 shadow-sm">
-            <Package size={28} />
+      <div className="grid grid-cols-12 gap-6 flex-1 overflow-hidden">
+
+        {/* Zone 1: Express Lane (High Priority & Ready) */}
+        <div className="col-span-12 lg:col-span-4 bg-emerald-50/50 rounded-2xl border border-emerald-100 flex flex-col overflow-hidden">
+          <div className="p-4 border-b border-emerald-100 bg-emerald-100/50 flex justify-between items-center shrink-0">
+            <h3 className="font-bold text-emerald-800 flex items-center gap-2">
+              <Zap size={18} fill="currentColor" /> Express Lane
+            </h3>
+            <span className="bg-emerald-200 text-emerald-800 text-xs font-bold px-2 py-1 rounded-full">
+              {expressLane.length} Ready
+            </span>
           </div>
-          <h3 className="text-slate-900 font-semibold mb-1">{t('logisticsQueueIdle')}</h3>
-          <p className="text-slate-500 text-sm max-w-xs mx-auto">{t('systemsOperational')}</p>
+          <div className="p-4 space-y-3 overflow-y-auto flex-1">
+            {expressLane.map(order => (
+              <div key={order.order_id} className="bg-white p-4 rounded-xl border-l-4 border-emerald-500 shadow-sm hover:shadow-md transition-all">
+                <div className="flex justify-between items-start mb-2">
+                  <span className="font-bold text-slate-800 text-lg">{order.order_id}</span>
+                  {order.tier > 1 && <span className="text-[10px] uppercase font-bold text-purple-600 bg-purple-100 px-2 py-1 rounded">VIP</span>}
+                </div>
+                <div className="text-sm font-medium text-slate-700 mb-1">{order.item_name}</div>
+                <div className="flex justify-between items-center mt-3">
+                  <span className="text-rose-600 font-bold text-xs flex items-center gap-1">
+                    <Clock size={12} /> Due in {order.days_remaining}d
+                  </span>
+                  <span className="text-emerald-600 font-bold text-xs flex items-center gap-1 bg-emerald-50 px-2 py-1 rounded border border-emerald-100">
+                    <CheckCircle size={12} /> Stock Reserved ({order.qty}/{order.qty})
+                  </span>
+                </div>
+                <button
+                  onClick={() => handleDispatch(order.order_id)}
+                  className="w-full mt-4 bg-emerald-600 text-white font-bold py-2 rounded-lg hover:bg-emerald-700 transition-colors shadow-emerald-200 shadow-lg text-sm active:scale-95 transform"
+                >
+                  DISPATCH NOW
+                </button>
+              </div>
+            ))}
+            {expressLane.length === 0 && <div className="text-center text-slate-400 italic text-sm mt-10">No urgent orders ready.</div>}
+          </div>
         </div>
-      ) : (
-        <>
-          {/* Trolley Animation */}
-          <TrolleyAnimation currentOrder={queue[0]} />
 
-          <div className="relative pl-8 border-l-2 border-slate-200 space-y-8">
-            {/* Head of Queue (Active) */}
-            <div className="relative">
-              <div className="absolute -left-[41px] top-4 w-6 h-6 rounded-full bg-sky-500 border-4 border-white shadow-lg shadow-sky-500/30 flex items-center justify-center">
-                <div className="w-1.5 h-1.5 bg-white rounded-full"></div>
-              </div>
-
-              <div className="bg-white rounded-xl border border-sky-100 shadow-[0_4px_20px_-10px_rgba(14,165,233,0.15)] p-5 relative overflow-hidden group">
-                <div className="absolute top-0 right-0 bg-sky-500 text-white text-[10px] font-bold px-3 py-1 rounded-bl-xl shadow-sm z-10">
-                  {t('processing')}
+        {/* Zone 2: Shortage Alert (Problem Orders) */}
+        <div className="col-span-12 lg:col-span-4 bg-amber-50/50 rounded-2xl border border-amber-100 flex flex-col overflow-hidden">
+          <div className="p-4 border-b border-amber-100 bg-amber-100/50 flex justify-between items-center shrink-0">
+            <h3 className="font-bold text-amber-800 flex items-center gap-2">
+              <AlertTriangle size={18} fill="currentColor" /> Shortage Alert
+            </h3>
+            <span className="bg-amber-200 text-amber-800 text-xs font-bold px-2 py-1 rounded-full">
+              {shortageAlert.length} Blocked
+            </span>
+          </div>
+          <div className="p-4 space-y-3 overflow-y-auto flex-1">
+            {shortageAlert.map(order => (
+              <div key={order.order_id} className="bg-white p-4 rounded-xl border-l-4 border-amber-500 shadow-sm hover:shadow-md transition-all">
+                <div className="flex justify-between items-start mb-2">
+                  <span className="font-bold text-slate-800">{order.order_id}</span>
+                  <span className="text-xs font-bold text-amber-600 bg-amber-50 px-2 py-1 rounded border border-amber-100">
+                    Shortage
+                  </span>
                 </div>
-                {/* Background decoration */}
-                <div className="absolute right-0 bottom-0 opacity-5 transform translate-x-4 translate-y-4">
-                  <Truck size={100} />
-                </div>
+                <div className="text-sm text-slate-600 mb-3">{order.item_name}</div>
 
-                <div className="flex items-start gap-4 relative z-0">
-                  <div className="w-12 h-12 bg-sky-50 rounded-xl flex items-center justify-center text-sky-600 border border-sky-100">
-                    <Truck size={24} />
+                {/* Stock Gap Visual */}
+                <div className="bg-slate-100 rounded-lg p-2 mb-3">
+                  <div className="flex justify-between text-xs font-medium text-slate-500 mb-1">
+                    <span>Stock: {order.current_stock}</span>
+                    <span className="text-rose-600">Missing: {order.qty - order.current_stock}</span>
                   </div>
-                  <div>
-                    <h4 className="text-lg font-bold text-slate-900">{queue[0].customer}</h4>
-                    <div className="flex items-center gap-3 mt-1">
-                      <span className="text-xs font-mono text-slate-500 bg-slate-100 px-1.5 py-0.5 rounded border border-slate-200">
-                        #{queue[0].order_id}
-                      </span>
-                      <span className="text-sm text-slate-600 font-medium">{queue[0].item}</span>
-                    </div>
-                    <div className="flex items-center gap-2 mt-3 text-xs text-sky-600 font-medium">
-                      <MapPin size={12} />
-                      <span>{t('dispatchingFromZoneA')}</span>
-                    </div>
+                  <div className="w-full bg-slate-200 rounded-full h-2">
+                    <div
+                      className="bg-emerald-500 h-2 rounded-full"
+                      style={{ width: `${(order.current_stock / order.qty) * 100}%` }}
+                    ></div>
                   </div>
                 </div>
-              </div>
-            </div>
 
-            {/* Queued Items */}
-            {queue.slice(1).map((order, idx) => (
-              <div key={idx} className="relative opacity-60 hover:opacity-100 transition-opacity">
-                <div className="absolute -left-[37px] top-4 w-4 h-4 rounded-full bg-slate-200 border-2 border-white"></div>
-
-                <div className="bg-white rounded-xl border border-slate-200 p-4 flex items-center gap-4">
-                  <div className="w-10 h-10 bg-slate-50 rounded-lg flex items-center justify-center text-slate-400 font-mono text-sm font-bold border border-slate-100">
-                    {idx + 2}
-                  </div>
-                  <div>
-                    <p className="text-slate-900 font-semibold text-sm">{order.customer}</p>
-                    <p className="text-slate-500 text-xs mt-0.5">#{order.order_id} • {order.item}</p>
-                  </div>
-                  <div className="ml-auto text-xs text-slate-400 flex items-center gap-1 bg-slate-50 px-2 py-1 rounded">
-                    <Clock size={12} />
-                    {t('waiting')}
-                  </div>
+                <div className="grid grid-cols-2 gap-2">
+                  <button className="bg-white border border-slate-200 text-slate-600 font-bold py-1.5 rounded-lg text-xs hover:bg-slate-50 transition-colors">
+                    Wait
+                  </button>
+                  <button className="bg-amber-100 text-amber-800 font-bold py-1.5 rounded-lg text-xs hover:bg-amber-200 transition-colors border border-amber-200">
+                    Ship Partial ({order.current_stock})
+                  </button>
                 </div>
               </div>
             ))}
+            {shortageAlert.length === 0 && <div className="text-center text-slate-400 italic text-sm mt-10">No stock shortages!</div>}
           </div>
-        </>
-      )}
+        </div>
+
+        {/* Zone 3: Standard Queue */}
+        <div className="col-span-12 lg:col-span-4 bg-slate-50 rounded-2xl border border-slate-200 flex flex-col overflow-hidden">
+          <div className="p-4 border-b border-slate-200 bg-slate-100 flex justify-between items-center shrink-0">
+            <h3 className="font-bold text-slate-700 flex items-center gap-2">
+              <Clock size={18} /> Standard Queue
+            </h3>
+            <span className="bg-slate-200 text-slate-600 text-xs font-bold px-2 py-1 rounded-full">
+              {standardQueue.length} Pending
+            </span>
+          </div>
+          <div className="p-4 space-y-2 overflow-y-auto flex-1">
+            {standardQueue.map(order => (
+              <div key={order.order_id} className="bg-white p-3 rounded-lg border border-slate-200 shadow-sm flex justify-between items-center opacity-80 hover:opacity-100 transition-opacity">
+                <div>
+                  <div className="font-bold text-slate-700 text-sm">{order.order_id}</div>
+                  <div className="text-xs text-slate-500">{order.item_name}</div>
+                </div>
+                <div className="text-right">
+                  <div className="text-xs font-mono text-slate-400">Qty: {order.qty}</div>
+                  <div className="text-[10px] text-emerald-600 font-bold">Ready</div>
+                </div>
+              </div>
+            ))}
+            {standardQueue.length === 0 && <div className="text-center text-slate-400 italic text-sm mt-10">Queue is empty.</div>}
+          </div>
+        </div>
+
+      </div>
     </div>
   );
 }

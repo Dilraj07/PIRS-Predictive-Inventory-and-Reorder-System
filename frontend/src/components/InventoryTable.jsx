@@ -57,7 +57,7 @@ export function InventoryTable({ data, onUpdate }) {
             <th className="py-4 px-6">Product Item</th>
             <th className="py-4 px-6">SKU ID</th>
             <th className="py-4 px-6">Stock Level</th>
-            <th className="py-4 px-6">Price (₹)</th>
+            <th className="py-4 px-6">Price (Unit)</th>
             <th className="py-4 px-6">Stability Score</th>
             <th className="py-4 px-6 text-right">Settings</th>
           </tr>
@@ -94,10 +94,10 @@ export function InventoryTable({ data, onUpdate }) {
                     <div className="flex flex-col gap-1.5 w-24 group-hover:cursor-pointer" onClick={() => startEdit(item)} title="Click to edit">
                       <div className="flex justify-between text-xs">
                         <span className="font-bold text-slate-700">{item.stock_hint ?? "-"}</span>
-                        <span className="text-slate-400 text-[10px]">/ 200</span>
+                        <span className="text-slate-400 text-[10px]">Stock</span>
                       </div>
                       <div className="h-1.5 w-full bg-slate-100 rounded-full overflow-hidden">
-                        <div className="h-full bg-sky-500 rounded-full" style={{ width: `${stockPercent}%` }}></div>
+                        <div className="h-full bg-sky-500 rounded-full" style={{ width: `${Math.min(100, (item.stock_hint / 500) * 100)}%` }}></div>
                       </div>
                     </div>
                   )}

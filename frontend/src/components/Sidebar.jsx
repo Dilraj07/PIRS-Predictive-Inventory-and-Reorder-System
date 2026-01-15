@@ -1,5 +1,5 @@
 import React from 'react';
-import { LayoutDashboard, Package, ShoppingCart, BarChart3, Settings, LogOut, HelpCircle, Truck } from 'lucide-react';
+import { LayoutDashboard, Package, ShoppingCart, BarChart3, Settings, HelpCircle, Truck, ClipboardList } from 'lucide-react';
 import { LanguageSelector } from './LanguageSelector';
 import { useLanguage } from '../contexts/LanguageContext';
 
@@ -9,6 +9,7 @@ export function Sidebar({ activeTab, onTabChange }) {
   const menuItems = [
     { id: 'dashboard', icon: LayoutDashboard, label: t('dashboard') },
     { id: 'inventory', icon: Package, label: t('inventory') },
+    { id: 'orders', icon: ClipboardList, label: 'Orders' }, // TODO: Add translation later
     { id: 'shipments', icon: Truck, label: t('shipments') },
     { id: 'reports', icon: BarChart3, label: t('reporting') },
   ];
@@ -66,15 +67,7 @@ export function Sidebar({ activeTab, onTabChange }) {
         {/* Language Selector */}
         <LanguageSelector />
 
-        {/* Logout Button */}
-        <button className="w-full flex items-center h-14 rounded-[24px] text-slate-400 hover:bg-red-50 hover:text-red-500 transition-colors">
-          <div className="w-14 h-14 flex items-center justify-center shrink-0">
-            <LogOut size={22} />
-          </div>
-          <span className="text-sm font-bold">
-            {t('logout')}
-          </span>
-        </button>
+
       </div>
 
     </div>

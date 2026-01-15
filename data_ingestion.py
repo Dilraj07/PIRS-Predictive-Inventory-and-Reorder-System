@@ -47,3 +47,21 @@ def get_sales_array(sku):
             conn.close()
             
     return sales_data
+
+def get_all_orders():
+    """
+    Fetches all customer orders.
+    """
+    orders = []
+    try:
+        conn = sqlite3.connect('pirs_warehouse.db')
+        conn.row_factory = sqlite3.Row # Allow dict-like access
+        cursor = conn.cursor()
+        cursor.execute("SELECT * FROM customer_orders ORDER BY order_date DESC")
+        orders = [dict(row) for row in cursor.fetchall()]
+    except sqlite3.Error as e:
+        print(f"Database error getting orders: {e}")
+    finally:
+        if conn:
+            conn.close()
+    return orders

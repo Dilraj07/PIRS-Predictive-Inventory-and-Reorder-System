@@ -4,8 +4,10 @@ import { Sidebar } from './components/Sidebar';
 import { Card } from './components/Card';
 import { InventoryTable } from './components/InventoryTable';
 import { ShipmentQueueViewer } from './components/ShipmentQueueViewer';
+import { OrdersTable } from './components/OrdersTable';
 import { Modal } from './components/Modal';
 import { AddProductForm } from './components/AddProductForm';
+import { ArchitectureView } from './components/ArchitectureView';
 import { AlertCircle, CheckCircle2, TrendingUp, Package, RefreshCw, ShoppingCart, Plus, Search, Info } from 'lucide-react';
 import { useLanguage } from './contexts/LanguageContext';
 
@@ -20,26 +22,30 @@ function App() {
   const [summary, setSummary] = useState(null);
   const [priority, setPriority] = useState(null);
   const [inventory, setInventory] = useState([]);
+  const [orders, setOrders] = useState([]);
   const [audit, setAudit] = useState([]);
   const [loading, setLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
 
   const fetchData = async () => {
     try {
-      const [sumRes, priRes, invRes, audRes] = await Promise.all([
+      const [sumRes, priRes, invRes, audRes, ordRes] = await Promise.all([
         api.get('/dashboard/summary'),
         api.get('/priority/top'),
         api.get('/inventory/stability'),
-        api.get('/audit/next')
+        api.get('/audit/next'),
+        api.get('/orders/history')
       ]);
 
       setSummary(sumRes.data);
       setPriority(priRes.data);
       setInventory(invRes.data);
       setAudit(audRes.data.audit_sequence);
+      setOrders(ordRes.data);
       setLoading(false);
     } catch (error) {
       console.error("Failed to fetch data", error);
+      setLoading(false);
     }
   };
 
@@ -54,22 +60,7 @@ function App() {
     fetchData();
   };
 
-  const handleSimulateOrder = async () => {
-    if (inventory.length === 0) return;
-    const randomItem = inventory[Math.floor(Math.random() * inventory.length)];
-    try {
-      await api.post('/orders/enqueue', {
-        order_id: `ORD-${Math.floor(Math.random() * 10000)}`,
-        customer: 'Simulated Customer',
-        item_sku: randomItem.sku
-      });
-      // Optional: Auto-switch to shipments tab to see it
-      // setActiveTab('shipments'); 
-      alert(`Order for ${randomItem.sku} queued! Check Shipments tab.`);
-    } catch (e) {
-      console.error(e);
-    }
-  };
+
 
   if (loading) return <div className="h-screen flex items-center justify-center bg-slate-50 text-slate-400 font-medium">{t('loading')}</div>;
 
@@ -92,19 +83,24 @@ function App() {
             </Card>
           </div>
         );
+      case 'orders':
+        return (
+          <div className="space-y-6">
+            <div className="flex justify-between items-center">
+              <div>
+                <h2 className="text-2xl font-bold text-slate-900">Customer Orders</h2>
+                <p className="text-slate-500 text-sm">Real-time Order History</p>
+              </div>
+            </div>
+            <Card title={null}>
+              <OrdersTable data={orders} />
+            </Card>
+          </div>
+        );
       case 'shipments':
         return (
           <div className="space-y-6">
             <ShipmentQueueViewer />
-            <Card title={t('simulationControls')}>
-              <div className="flex items-center gap-4">
-                <button onClick={handleSimulateOrder} className="bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium px-4 py-2 rounded-lg transition-colors flex items-center gap-2">
-                  <ShoppingCart size={16} />
-                  {t('enqueueNewOrder')}
-                </button>
-                <p className="text-sm text-slate-500">{t('addsRandomOrder')}</p>
-              </div>
-            </Card>
           </div>
         );
       case 'reports':
@@ -125,6 +121,7 @@ function App() {
                 ))}
               </div>
             </Card>
+            <ArchitectureView />
           </div>
         );
       case 'dashboard':
